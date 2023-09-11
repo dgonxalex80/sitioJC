@@ -1,0 +1,87 @@
+library(readxl)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+# ... (código previo, como el que proporcionaste)
+
+
+matriculados <- read_excel("data/matriculados.xlsx")
+names(matriculados)= c("ID", "Periodo", "Programa Academico")
+listado1 <- read_excel("data/listado-estudiantes-javerianacaliinterniships5.xlsx")
+names(listado1) = c("ID", "Nombre", "Correo","Teléfono","Dirección","Carrera",          
+                    "Modalidad", "Ubicación", "Asignado", "Empresa","Oferta",
+                    "Estado", "Tutor")
+matriculados20232 = subset(matriculados,matriculados$Periodo == "20232")
+
+
+listado1$cruce = ifelse(listado1$ID %in% matriculados$ID, 1, 0)
+listado1$pendiente= as.numeric(listado1$Empresa=="Pendiente") # rotando
+listado1$activos=as.numeric(listado1$Estado != "Pausado") # activo
+listado1$pausado=as.numeric(listado1$Estado == "Pausado") # pausado
+
+t0=table(matriculados20232$"Programa Academico") %>%
+  as.data.frame()# matriculados
+carreras = t0[,1]
+matriculados = t0[,2]
+
+t1=table(listado1$Carrera ,listado1$cruce) %>%
+  as.data.frame.matrix() #  falta matric /programa
+programa = t1[,2]
+
+t2= table(listado1$Carrera,listado1$pendiente) %>%
+  as.data.frame.matrix()  # ubicados /pausados
+ubicados = t2[,1]
+
+t3=  table(listado1$Carrera, listado1$activos) %>%
+  as.data.frame.matrix()# programa
+programa = t3[,2]
+
+t4 = table(listado1$Carrera, listado1$pausado) %>%
+  as.data.frame.matrix()# programa
+
+t5 = table(listado1$Carrera, listado1$pendiente) %>%
+  as.data.frame.matrix()# Rotando
+
+
+faltan = t1[,1]
+pendiente = rep(0,22)
+pausado = t4[,2]
+pendiente = t5[,2]
+
+comovamos = data.frame(carreras,
+                       matriculados,
+                       programa,
+                       faltan,
+                       ubicados,
+                       pendiente,
+                       pausado)
+comovamos
+
+
+
+
+
+# Calcula la suma por columnas
+total = colSums(comovamos[, 2:7])
+
+# Crear un nuevo registro como un data.frame
+totales <- data.frame(
+  carreras = "Total", 
+  matriculados = total[1],
+  programa = total[2],
+  faltan = total[3],
+  ubicados = total[4],
+  pendiente = total[5],
+  pausado = total[6])
+
+# Agregar el nuevo registro a comovamos usando bind_rows
+comovamos <- bind_rows(comovamos, totales)
+
+# Imprimir la tabla elegante usando kable()
+comovamos %>%
+  kable(format = "html", escape = FALSE, row.names = FALSE) %>%
+  kable_styling("striped", full_width = FALSE) %>%
+  row_spec(nrow(comovamos), bold = TRUE)
+
+

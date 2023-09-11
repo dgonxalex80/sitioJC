@@ -1,9 +1,9 @@
-name: "my-website"
+name: "Como Vamos"
 output_dir: "docs"
 navbar:
-  title: "My Website"
+  title: " "
   left:
-    - text: "Home"
+    - text: "Estudiantes"
       href: index.html
-    - text: "About"
+    - text: "Tutores"
       href: about.html
